@@ -1,0 +1,8 @@
+{
+  "postinstall": "typings install",
+  "devDependencies": {
+    "tslint": "^3.14.0",
+    "typescript": "^1.8.10",
+    "typings": "^1.3.2"
+  }
+}
