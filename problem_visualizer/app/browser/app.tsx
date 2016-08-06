@@ -1,16 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import {Store,IPoint,ISegment} from "./store";
-
-const width = 970;
-const height = 540;
-const xScale = d3.scale.linear().domain([0, 1]).range([0, width]);
-const yScale = d3.scale.linear().domain([0, 1]).range([0, height]);
-
-const svgElement = d3.select("#d3")
-    .append("svg")
-    .attr({ width, height })
-    .classed("center-block", true);
+import { Store, IPoint, ISegment } from "./store";
+import { D3Renderer } from "./d3renderer";
 
 interface IAppState {
     inputText?: string;
@@ -50,18 +41,23 @@ class App extends React.Component<{}, IAppState> {
         });
 
         return (
-            <div className="row">
-                <div className="col-xs-6">
-                    <textarea
-                        rows={10}
-                        placeholder="入力を貼り付けてね"
-                        value={ this.state.inputText }
-                        onChange={ this.onTextUpdate.bind(this) }
-                        className="form-control"/>
+            <div className="container">
+                <div className="row">
+                    <div className="col-xs-6">
+                        <form>
+                            <textarea
+                                rows={10}
+                                placeholder="入力を貼り付けてね"
+                                value={ this.state.inputText }
+                                onChange={ this.onTextUpdate.bind(this) }
+                                className="form-control"/>
+                        </form>
+                    </div>
+                    <div id="d3" className="col-xs-6">
+                    </div>
                 </div>
-                <div className="col-xs-6">
-                    <p>Error: {this.state.err}</p>
-                    <table className="table">
+                <div className="row">
+                    <table className="table table-condensed">
                         <tbody>
                             { polygonTables }
                             { edgeTables }
@@ -72,6 +68,7 @@ class App extends React.Component<{}, IAppState> {
         );
     }
     private onChange() {
+        new D3Renderer("#d3").render(this.store.vertex, this.store.edge);
         this.setState({
             inputText: this.store.inputText,
             err: this.store.err,
