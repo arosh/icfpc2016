@@ -3,6 +3,8 @@ import { Route, IndexRoute, Link, Router, useRouterHistory } from "react-router"
 import { createHashHistory } from "history";
 import * as ReactDOM from "react-dom";
 import { ResultStore } from "./result-store";
+import { Store, IPoint, ISegment } from "./store";
+import { D3Renderer } from "./d3renderer";
 
 const resultStore = new ResultStore();
 
@@ -47,19 +49,14 @@ class ProblemLine extends React.Component<IProblemLineProps, {}> {
     }
 }
 
-interface IHomeState {
-    problemLineProps: IProblemLineProps[];
-}
-
-class Home extends React.Component<{}, IHomeState> {
+class Home extends React.Component<{}, {}> {
+    private problemLineProps: IProblemLineProps[];
     constructor(props: {}) {
         super(props);
-        this.state = {
-            problemLineProps: resultStore.getTable(),
-        };
+        this.problemLineProps = resultStore.getTable();
     }
     public render() {
-        const td = this.state.problemLineProps.map(x => <ProblemLine {...x} />);
+        const td = this.problemLineProps.map(x => <ProblemLine {...x} />);
         return (
             <div className="row">
                 <table className="table table-striped">
@@ -85,16 +82,85 @@ class Home extends React.Component<{}, IHomeState> {
 interface IItemProps {
     params: {
         problemId: string;
-    }
+    };
 }
 
-class Item extends React.Component<IItemProps, {}> {
+interface IItemState {
+    inputText?: string;
+    err?: string;
+    vertex?: IPoint[][];
+    edge?: ISegment[];
+}
+
+class Item extends React.Component<IItemProps, IItemState> {
+    private store: Store;
+    private d3renderer: D3Renderer;
+    private problemIdToContent: { [index: string]: string };
+    constructor(props: IItemProps) {
+        super(props);
+        this.store = new Store(this.onChange.bind(this));
+        this.problemIdToContent = resultStore.getIdToContent();
+        this.state = {
+            inputText: "",
+            err: "",
+            vertex: [],
+            edge: [],
+        };
+    }
     public render() {
+        const createTableRecord = (key: string, value: string) => {
+            return (
+                <tr key={key}>
+                    <th scope="row">{key}</th>
+                    <td>{value}</td>
+                </tr>
+            );
+        };
+        const polygonTables = this.state.vertex.map((arr, index) => {
+            return createTableRecord("polygon[" + index + "]", arr.map(p => "(" + p.x + "," + p.y + ")").join(" "));
+        });
+        const edgeTables = this.state.edge.map((seg, index) => {
+            const st = "(" + seg.st.x + "," + seg.st.y + ")";
+            const en = "(" + seg.en.x + "," + seg.en.y + ")";
+            return createTableRecord("edge[" + index + "]", st + " " + en);
+        });
         return (
-            <div>
-                {this.props.params.problemId}
+            <div className="container">
+                <div className="row">
+                    <div className="col-xs-6">
+                        <form>
+                            <textarea
+                                rows={10}
+                                value={this.problemIdToContent[this.props.params.problemId]}
+                                className="form-control"/>
+                        </form>
+                    </div>
+                    <div id="d3" className="col-xs-6">
+                    </div>
+                </div>
+                <div className="row">
+                    <table className="table table-condensed">
+                        <tbody>
+                            { polygonTables }
+                            { edgeTables }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
+    }
+    public componentDidMount() {
+        this.d3renderer = new D3Renderer("#d3");
+        this.store.onTextUpdate(this.problemIdToContent[this.props.params.problemId]);
+    }
+    private onChange() {
+        this.d3renderer.render(this.store.vertex, this.store.edge);
+        this.setState({
+            inputText: this.store.inputText,
+            err: this.store.err,
+            vertex: this.store.vertex,
+            edge: this.store.edge,
+        });
     }
 }
 

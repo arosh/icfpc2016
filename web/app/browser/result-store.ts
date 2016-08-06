@@ -83,4 +83,14 @@ export class ResultStore {
         }
         return retval;
     }
+    public getIdToContent() {
+        const retval: { [index: string]: string } = {};
+        for (const index in this.tinydb.problem) {
+            if (this.tinydb.problem.hasOwnProperty(index)) {
+                const item = this.tinydb.problem[index];
+                retval[item.problem_id] = item.content;
+            }
+        }
+        return retval;
+    }
 }

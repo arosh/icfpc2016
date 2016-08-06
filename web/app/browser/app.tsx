@@ -12,6 +12,7 @@ interface IAppState {
 
 class App extends React.Component<{}, IAppState> {
     private store: Store;
+    private d3renderer: D3Renderer;
     constructor(props: {}) {
         super(props);
         this.store = new Store(this.onChange.bind(this));
@@ -67,8 +68,11 @@ class App extends React.Component<{}, IAppState> {
             </div>
         );
     }
+    public componentDidMount() {
+        this.d3renderer = new D3Renderer("#d3");
+    }
     private onChange() {
-        new D3Renderer("#d3").render(this.store.vertex, this.store.edge);
+        this.d3renderer.render(this.store.vertex, this.store.edge);
         this.setState({
             inputText: this.store.inputText,
             err: this.store.err,

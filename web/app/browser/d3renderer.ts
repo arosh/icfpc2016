@@ -20,9 +20,7 @@ export class D3Renderer {
     private yAxisEl: d3.Selection<any>;
 
     constructor(elementId: string) {
-        const div = d3.select(elementId);
-        div.select("svg").remove();
-        this.el = div.append("svg")
+        this.el = d3.select(elementId).append("svg")
             .attr({ width: renderSize, height: renderSize })
             .classed("center-block", true);
         // 順番重要
