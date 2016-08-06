@@ -1,4 +1,3 @@
-import dataset
 import requests
 import util
 import time
@@ -18,10 +17,10 @@ def download_snapshot():
         'Expect': '',
         'X-API-Key': util.API_KEY,
     }
-    r = requests.get(
-        'http://2016sv.icfpcontest.org/api/snapshot/list', headers=headers)
+    url = 'http://2016sv.icfpcontest.org/api/snapshot/list'
+    r = requests.get(url, headers=headers)
     last_access = time.time()
-    print('download_snapshot:', last_access)
+    print('download_snapshot:', time.asctime(time.localtime(last_access)))
     return r.json()
 
 
@@ -34,10 +33,10 @@ def download_blob(spec_hash):
         'Expect': '',
         'X-API-Key': util.API_KEY,
     }
-    r = requests.get('http://2016sv.icfpcontest.org/api/blob/' +
-                     spec_hash, headers=headers)
+    url = 'http://2016sv.icfpcontest.org/api/blob/' + spec_hash
+    r = requests.get(url, headers=headers)
     last_access = time.time()
-    print('download_blob:', last_access)
+    print('download_blob:', time.asctime(time.localtime(last_access)))
     return r.text
 
 
@@ -76,8 +75,7 @@ def main():
     if not snapshot['ok']:
         raise Exception(snapshot)
     # タイムスタンプが最新のハッシュ値を得る
-    time_and_hash = [(x['snapshot_time'], x['snapshot_hash'])
-                     for x in snapshot['snapshots']]
+    time_and_hash = [(x['snapshot_time'], x['snapshot_hash']) for x in snapshot['snapshots']]
     time_and_hash.sort(key=lambda x: x[0])
     latest_snapshot_hash = time_and_hash[-1][1]
     print('latest_snapshot_hash =', latest_snapshot_hash)

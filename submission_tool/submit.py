@@ -19,7 +19,7 @@ def get_problem_id_list(solver_name):
     problems.sort(key=lambda x: x['solution_size'], reverse=True)
     for problem in problems:
         query = (where('problem_id') == problem['problem_id']) & (where('solver_name') == solver_name)
-        if len(submission_table.search(query)) == 0:
+        if not submission_table.search(query):
             yield problem['problem_id']
 
 
