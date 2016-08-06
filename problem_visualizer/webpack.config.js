@@ -11,7 +11,9 @@ module.exports = {
     },
     // https://webpack.github.io/docs/library-and-externals.html
     externals: {
-        lodash: "_"
+        "d3": "d3",
+        "react": "React",
+        "react-dom": "ReactDOM",
     },
     module: {
         loaders: [
