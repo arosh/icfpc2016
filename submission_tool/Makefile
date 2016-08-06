@@ -1,2 +1,2 @@
-CXX=g++-6
-CXXFLAGS=-D_GLIBCXX_DEBUG -std=gnu++0x -Wall -Wextra -Wshadow -g -fsanitize=address
+CXX=clang++
+CXXFLAGS=-std=c++14 -Wall -Wextra -Wshadow -O2 -g
