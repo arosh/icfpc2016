@@ -12,7 +12,7 @@ import util
 last_access = None
 
 def get_problem_id_list(solver_name):
-    # 未提出でsolution_sizeが最も小さいやつを解く
+    # 未提出でsolution_sizeが小さい順
     db = tinydb.TinyDB('icfpc.json')
     submission_table = db.table('submission')
     problem_table = db.table('problem')
@@ -21,7 +21,7 @@ def get_problem_id_list(solver_name):
     problems.sort(key=lambda x: x['solution_size'], reverse=True)
     for problem in problems:
         query = (where('problem_id') == problem['problem_id']) & (where('solver_name') == solver_name)
-        if not submission_table.search(query):
+        if not submission_table.contains(query):
             yield problem['problem_id']
 
 
@@ -31,7 +31,8 @@ def create_solution(problem_id):
     problem = problem_table.get(where('problem_id') == problem_id)
     print('create_solution: problem_id =', problem_id)
     try:
-        solution = subprocess.check_output(['./solver'], input=problem['content'].encode('UTF-8'))
+        content = problem['content'].encode('UTF-8')
+        solution = subprocess.check_output(['./solver'], input=content)
         return solution.decode('UTF-8')
     except subprocess.CalledProcessError as e:
         print(e, file=sys.stderr)
@@ -40,8 +41,8 @@ def create_solution(problem_id):
 
 def submit_solution(problem_id, solution, solver_name):
     global last_access
-    while last_access is not None and time.time() < last_access + 1:
-        time.sleep(0.01)
+    if last_access is not None:
+        time.sleep(max(0, last_access + 1 - time.time()))
 
     headers = {
         'Expect': '',

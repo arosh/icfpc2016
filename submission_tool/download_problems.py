@@ -14,8 +14,8 @@ last_access = None
 
 def download_snapshot():
     global last_access
-    while last_access is not None and time.time() < last_access + 1:
-        time.sleep(0.01)
+    if last_access is not None:
+        time.sleep(max(0, last_access + 1 - time.time()))
 
     headers = {
         'Expect': '',
@@ -30,8 +30,8 @@ def download_snapshot():
 
 def download_blob(spec_hash):
     global last_access
-    while last_access is not None and time.time() < last_access + 1:
-        time.sleep(0.01)
+    if last_access is not None:
+        time.sleep(max(0, last_access + 1 - time.time()))
 
     headers = {
         'Expect': '',
@@ -50,22 +50,20 @@ def save_contest(contest_status):
     contest_table.insert(contest_status)
 
 
-def download_topk_problems(contest_status):
-    problems = contest_status['problems']
-    # solution_sizeが小さい順にダウンロード
-    problems.sort(key=lambda x: x['solution_size'], reverse=True)
-
+def download_problems(contest_status):
     with tinydb.TinyDB('icfpc.json', storage=CachingMiddleware(JSONStorage)) as db:
         problem_table = db.table('problem')
 
-        for problem in problems:
+        for problem in contest_status['problems']:
             problem_spec_hash = problem['problem_spec_hash']
-            if not problem_table.search(where('problem_spec_hash') == problem_spec_hash):
+
+            if not problem_table.contains(where('problem_spec_hash') == problem_spec_hash):
                 print('problem_spec_hash =', problem_spec_hash)
                 content = download_blob(problem_spec_hash)
                 problem_table.insert({**problem, 'content': content})
             else:
                 problem_table.update(problem, where('problem_spec_hash') == problem_spec_hash)
+
 
 def main():
     # snapshot APIからダウンロード
@@ -81,7 +79,7 @@ def main():
     # ハッシュ値をもとにコンテスト情報をダウンロード
     contest_status = json.loads(download_blob(latest_snapshot_hash))
     save_contest(contest_status)
-    download_topk_problems(contest_status)
+    download_problems(contest_status)
 
 if __name__ == '__main__':
     main()
