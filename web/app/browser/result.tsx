@@ -13,7 +13,7 @@ class App extends React.Component<{}, {}> {
         return (
             <div className="container">
                 <div className="row">
-                    <h1 className="text-center"><Link to="/">試運転 @ICFPC 2016</Link></h1>
+                    <h1 className="text-center"><Link to="/">試運転@ICFPC 2016</Link></h1>
                 </div>
                 { this.props.children }
             </div>
