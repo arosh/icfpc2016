@@ -4,15 +4,19 @@
 
 //yurahunaさんのコードを参考に、多倍長整数を含む入力にも対応した。
 
+//BigRationalに書き換えた
+//時計回り/反時計回りの判定を入れた
+
 #include <iostream>
 #include <boost/rational.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <boost/multiprecision/cpp_dec_float.hpp>	//多倍長小数点数
 using namespace std;
 typedef boost::multiprecision::cpp_int BigInt;
-typedef boost::multiprecision::cpp_dec_float_100 BigDouble;
 typedef boost::rational<BigInt> BigRational;
+
 #define rep(i,n) for (int i=0;i<(n);i++)
+#define rep2(i,a,b) for (int i=(a);i<(b);i++)
+#define rrep(i,n) for (int i=(n)-1;i>=0;i--)
 #define all(a) (a).begin(),(a).end()
 
 struct P {
@@ -48,21 +52,21 @@ typedef vector<P> G;
 #define prev(g, i) g[(i - 1 + g.size()) % g.size()]
 #define printG(g) rep(i, g.size()){cout << g[i] << " ";} cout << endl;
 
-// BigRational cross(const P& a, const P& b) {
-//     return a.x * b.y - a.y * b.x;
-// }
-//
-// BigRational dot(const P& a, const P& b) {
-//     return a.x * b.x + a.y * b.y;
-// }
-//
-// bool counterClockwiseG(const G& g) {
-//     // 符号付き面積が正なら反時計回り
-//     BigRational area;
-//     rep(i, g.size()) area += cross(here(g, i), next(g, i));
-//     return area > BigInt("0");
-// }
-//
+BigRational cross(const P& a, const P& b) {
+	return a.x * b.y - a.y * b.x;
+}
+
+BigRational dot(const P& a, const P& b) {
+	return a.x * b.x + a.y * b.y;
+}
+
+bool counterClockwiseG(const G& g) {
+	// 符号付き面積が正なら反時計回り
+	BigRational area;
+	rep(i, g.size()) area += cross(here(g, i), next(g, i));
+	return area > BigInt("0");
+}
+
 
 // 座標に出てくる分数(分母は省略されているかも)をBigRationalにして返す
 BigRational parse(const string& s) {
@@ -105,17 +109,6 @@ G readG() {
 	return g;
 }
 
-// void printL(const L& l) {
-//     cerr << "{";
-//     printP(l.a);
-//     printP(l.b);
-//     cerr << "}" << endl;
-// }
-//
-// void printG(const G& g) {
-//     for (auto&& p : g) printP(p);
-// }
-
 int main() {
 	int n;  // #polygons in silhoutte
 	cin >> n;
@@ -126,49 +119,136 @@ int main() {
 	vector<L> skeleton;
 	rep(i, m) skeleton.emplace_back(readL());
 	
-	//silhoutte内の多角形が、時計回りか反時計回りかを判定する必要がありそう
+//	cout << "silhoutte:" << endl;
+//	for (auto&& g : silhoutte) {
+//		printG(g);
+//	}
+//	
+//	cout << "skeleton:" << endl;
+//	for (auto&& l : skeleton) {
+//		cout << l << endl;
+//	}
+	
+//	// silhoutte内の多角形が、時計回りか反時計回りかを判定
+//	// 判定しているだけでまだ使ってない
+//	vector<bool> ccw_silhoutte(n);
+//	rep(i, n) ccw_silhoutte[i] = counterClockwiseG(silhoutte[i]);
+//	cout << "ccw_silhoutte:" << endl;
+//	rep(i, n) {
+//		cout << i << ": " << (ccw_silhoutte[i] ? "YES" : "NO") << endl;
+//	}
+//	cout << endl;
 	
 	BigRational max_x = silhoutte[0][0].x;
 	BigRational max_y = silhoutte[0][0].y;
 	BigRational min_x = silhoutte[0][0].x;
 	BigRational min_y = silhoutte[0][0].y;
-
-	//silhoutte[0]が外枠であると想定。全頂点の凸包したほうがいいかも
-	for(int point = 1;point<silhoutte[0].size();point++){
-		BigDouble tmp_x = boost::rational_cast<BigDouble>(silhoutte[0][point].x);
-		BigDouble tmp_y = boost::rational_cast<BigDouble>(silhoutte[0][point].y);
-
-		BigDouble cur_max_x = boost::rational_cast<BigDouble>(max_x);
-		BigDouble cur_max_y = boost::rational_cast<BigDouble>(max_y);
-		BigDouble cur_min_x = boost::rational_cast<BigDouble>(min_x);
-		BigDouble cur_min_y = boost::rational_cast<BigDouble>(min_y);
-		
-		if(tmp_x>cur_max_x) max_x = silhoutte[0][point].x;
-		if(tmp_x<cur_min_x) min_x = silhoutte[0][point].x;
 	
-		if(tmp_y>cur_max_y)	max_y = silhoutte[0][point].y;
-		if(tmp_y<cur_min_y)	min_y = silhoutte[0][point].y;
+	// silhoutteに現れる全頂点について、x,yのmin,maxを求める
+	// BigRationalのまま計算
+	for (auto g : silhoutte) {
+		for (auto p : g) {
+			max_x = max(max_x, p.x);
+			max_y = max(max_y, p.y);
+			min_x = min(min_x, p.x);
+			min_y = min(min_y, p.y);
+		}
 	}
 	
-//	cout<<max_x<<endl;
-//	cout<<max_y<<endl;
-//	cout<<min_x<<endl;
-//	cout<<min_y<<endl;
+	
+	BigRational w = max_x - min_x;
+	BigRational h = max_y - min_y;
+	
+	BigRational dw(1,1);
+	BigRational dh(1,1);
+	
+	while(dw >= w*2)dw /= 2;
+	while(dh >= h*2)dh /= 2;
+	
+//	cout<<dw<<endl;
+//	cout<<dh<<endl;
+
+	int hp_sum = boost::rational_cast<int>(1/dh)+1;
+	int wp_sum = boost::rational_cast<int>(1/dw)+1;
+	
+	//頂点を出力
+	cout<<hp_sum*wp_sum<<endl;
+	for(BigRational hi = BigRational(0/1);hi<=1;hi+=dh){
+		for(BigRational wi = BigRational(0/1);wi<=1;wi+=dw){
+			cout<<hi<<","<<wi<<endl;
+		}
+	}
+	
+	//面(長方形)を出力
+	cout<<(hp_sum-1)*(wp_sum-1)<<endl;
+	rep(i,hp_sum-1){
+		rep(j,wp_sum-1){
+			cout<<4<<" "<<wp_sum*i+j<<" "<<wp_sum*i+j +1<<" "<<wp_sum*i+j +wp_sum+1<<" "<<wp_sum*i+j +wp_sum<<endl;
+		}
+	}
+
+	
+	rep(i,hp_sum){
+		rep(j,wp_sum){
+			if(i%2==0){
+				if(j%2==0)	cout<<min_x   <<","<<min_y   <<endl;
+				else		cout<<min_x+dw<<","<<min_y   <<endl;
+			}
+			else{
+				if(j%2==0)	cout<<min_x   <<","<<min_y+dh<<endl;
+				else		cout<<min_x+dw<<","<<min_y+dh<<endl;
+			}
+		}
+	}
 	
 	
-	//以下出力
-	cout<<4<<endl;
-	cout<<"0,0"<<endl;
-	cout<<"1,0"<<endl;
-	cout<<"1,1"<<endl;
-	cout<<"0,1"<<endl;
 	
-	cout<<1<<endl;
-	cout<<"4 0 1 2 3"<<endl;
 	
-	cout<<min_x  <<","<<min_y  <<endl;
-	cout<<min_x+1<<","<<min_y  <<endl;
-	cout<<min_x+1<<","<<min_y+1<<endl;
-	cout<<min_x  <<","<<min_y+1<<endl;
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+//	
+//	//以下出力
+//	cout<<4<<endl;
+//	cout<<"0,0"<<endl;
+//	cout<<"1,0"<<endl;
+//	cout<<"1,1"<<endl;
+//	cout<<"0,1"<<endl;
+//	
+//	cout<<1<<endl;
+//	cout<<"4 0 1 2 3"<<endl;
+//	
+//	cout<<min_x  <<","<<min_y  <<endl;
+//	cout<<min_x+1<<","<<min_y  <<endl;
+//	cout<<min_x+1<<","<<min_y+1<<endl;
+//	cout<<min_x  <<","<<min_y+1<<endl;
+//	
+	// int V;  // #vertices in source position
+	// int F;  // #facets in source position
+	//
+	// vector<string> p = {"0,0",
+	//                     "1,0",
+	//                     "1,1",
+	//                     "0,1"};
+	//
+	// vector<string> q = {"1,1",
+	//                     "2,1",
+	//                     "2,2",
+	//                     "1,2"};
+	//
+	// // 1回も折らない場合
+	// V = 4;
+	// F = 1;
+	// cout << V << endl;
+	// rep(i, V) cout << p[i] << endl;
+	// cout << F << endl;
+	// cout << "4 0 1 2 3" << endl;
+	// rep(i, V) cout << q[i] << endl;
 }
