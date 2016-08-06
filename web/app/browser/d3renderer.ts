@@ -105,7 +105,6 @@ export class D3Renderer {
         const xlen = xmax - xmin;
         const ylen = ymax - ymin;
 
-        // yの上と下の調整をしないといけないなぁ…
         if (xlen > ylen) {
             this.xScale = d3.scale.linear()
                 .domain([xmin, xmax])

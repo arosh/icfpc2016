@@ -5,7 +5,6 @@ import { D3Renderer } from "./d3renderer";
 
 interface IAppState {
     inputText?: string;
-    err?: string;
     vertex?: IPoint[][];
     edge?: ISegment[];
 }
@@ -18,7 +17,6 @@ class App extends React.Component<{}, IAppState> {
         this.store = new Store(this.onChange.bind(this));
         this.state = {
             inputText: "",
-            err: "",
             vertex: [],
             edge: [],
         };
@@ -40,7 +38,6 @@ class App extends React.Component<{}, IAppState> {
             const en = "(" + seg.en.x + "," + seg.en.y + ")";
             return createTableRecord("edge[" + index + "]", st + " " + en);
         });
-
         return (
             <div className="container">
                 <div className="row">
@@ -75,7 +72,6 @@ class App extends React.Component<{}, IAppState> {
         this.d3renderer.render(this.store.vertex, this.store.edge);
         this.setState({
             inputText: this.store.inputText,
-            err: this.store.err,
             vertex: this.store.vertex,
             edge: this.store.edge,
         });

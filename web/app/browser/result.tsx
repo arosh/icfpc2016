@@ -35,7 +35,7 @@ class ProblemLine extends React.Component<IProblemLineProps, {}> {
     public render() {
         const detailUrl = `http://2016sv.icfpcontest.org/problem/view/${this.props.Id}`;
         const visualizeTo = `/problem/${this.props.Id}`;
-        const maxScore = isNaN(this.props.maxScore) ? "NaN" : this.props.maxScore + "";
+        const maxScore = isNaN(this.props.maxScore) ? "NaN" : (this.props.maxScore + "");
         return (
             <tr key={this.props.Id}>
                 <td><a href={detailUrl}>Detail</a></td>
@@ -91,7 +91,6 @@ interface IItemProps {
 
 interface IItemState {
     inputText?: string;
-    err?: string;
     vertex?: IPoint[][];
     edge?: ISegment[];
 }
@@ -106,7 +105,6 @@ class Item extends React.Component<IItemProps, IItemState> {
         this.problemIdToContent = resultStore.getIdToContent();
         this.state = {
             inputText: "",
-            err: "",
             vertex: [],
             edge: [],
         };
@@ -119,7 +117,7 @@ class Item extends React.Component<IItemProps, IItemState> {
                         <form>
                             <textarea
                                 rows={10}
-                                value={this.problemIdToContent[this.props.params.problemId]}
+                                value={this.state.inputText}
                                 className="form-control"/>
                         </form>
                     </div>
@@ -136,7 +134,6 @@ class Item extends React.Component<IItemProps, IItemState> {
         this.d3renderer.render(this.store.vertex, this.store.edge);
         this.setState({
             inputText: this.store.inputText,
-            err: this.store.err,
             vertex: this.store.vertex,
             edge: this.store.edge,
         });
