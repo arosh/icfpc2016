@@ -25,6 +25,7 @@ export interface IProblemLineProps {
     Id: number;
     problemSize: number;
     solutionSize: number;
+    maxScore: number;
     yazaten_v1: number;
     yazaten_v2: number;
     yazaten_v3: number;
@@ -34,6 +35,7 @@ class ProblemLine extends React.Component<IProblemLineProps, {}> {
     public render() {
         const detailUrl = `http://2016sv.icfpcontest.org/problem/view/${this.props.Id}`;
         const visualizeTo = `/problem/${this.props.Id}`;
+        const maxScore = isNaN(this.props.maxScore) ? "NaN" : this.props.maxScore + "";
         return (
             <tr key={this.props.Id}>
                 <td><a href={detailUrl}>Detail</a></td>
@@ -41,6 +43,7 @@ class ProblemLine extends React.Component<IProblemLineProps, {}> {
                 <td>{this.props.Id}</td>
                 <td>{this.props.problemSize}</td>
                 <td>{this.props.solutionSize}</td>
+                <td>{maxScore}</td>
                 <td>{this.props.yazaten_v1}</td>
                 <td>{this.props.yazaten_v2}</td>
                 <td>{this.props.yazaten_v3}</td>
@@ -66,6 +69,7 @@ class Home extends React.Component<{}, {}> {
                         <th>Id</th>
                         <th>Problem Size</th>
                         <th>Solution Size</th>
+                        <th>Max Score</th>
                         <th>yazaten_v1</th>
                         <th>yazaten_v2</th>
                         <th>yazaten_v3</th>
@@ -108,22 +112,6 @@ class Item extends React.Component<IItemProps, IItemState> {
         };
     }
     public render() {
-        const createTableRecord = (key: string, value: string) => {
-            return (
-                <tr key={key}>
-                    <th scope="row">{key}</th>
-                    <td>{value}</td>
-                </tr>
-            );
-        };
-        const polygonTables = this.state.vertex.map((arr, index) => {
-            return createTableRecord("polygon[" + index + "]", arr.map(p => "(" + p.x + "," + p.y + ")").join(" "));
-        });
-        const edgeTables = this.state.edge.map((seg, index) => {
-            const st = "(" + seg.st.x + "," + seg.st.y + ")";
-            const en = "(" + seg.en.x + "," + seg.en.y + ")";
-            return createTableRecord("edge[" + index + "]", st + " " + en);
-        });
         return (
             <div className="container">
                 <div className="row">
@@ -135,16 +123,7 @@ class Item extends React.Component<IItemProps, IItemState> {
                                 className="form-control"/>
                         </form>
                     </div>
-                    <div id="d3" className="col-xs-6">
-                    </div>
-                </div>
-                <div className="row">
-                    <table className="table table-condensed">
-                        <tbody>
-                            { polygonTables }
-                            { edgeTables }
-                        </tbody>
-                    </table>
+                    <div id="d3" className="col-xs-6"></div>
                 </div>
             </div>
         );

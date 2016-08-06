@@ -71,16 +71,25 @@ export class ResultStore {
         for (const index in this.tinydb.problem) {
             if (this.tinydb.problem.hasOwnProperty(index)) {
                 const item = this.tinydb.problem[index];
+                let maxScore: number;
+                const resemblances = item.ranking.map(x => x.resemblance);
+                if (resemblances.length > 0) {
+                    maxScore = Math.max(...resemblances);
+                } else {
+                    maxScore = NaN;
+                }
                 retval.push({
                     Id: item.problem_id,
                     problemSize: item.problem_size,
                     solutionSize: item.solution_size,
+                    maxScore: maxScore,
                     yazaten_v1: scoreDict["yazaten_v1"][item.problem_id],
                     yazaten_v2: scoreDict["yazaten_v2"][item.problem_id],
                     yazaten_v3: scoreDict["yazaten_v3"][item.problem_id],
                 });
             }
         }
+        retval.sort((x, y) => x.Id - y.Id);
         return retval;
     }
     public getIdToContent() {

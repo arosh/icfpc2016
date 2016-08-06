@@ -46,7 +46,7 @@ def save_contest(contest_status):
     contest_table.insert(contest_status)
 
 
-def download_topk_problems(contest_status, k=1000):
+def download_topk_problems(contest_status):
     problems = contest_status['problems']
     # solution_sizeが小さい順にダウンロード
     problems.sort(key=lambda x: x['solution_size'], reverse=True)
@@ -54,20 +54,14 @@ def download_topk_problems(contest_status, k=1000):
     db = tinydb.TinyDB('icfpc.json')
     problem_table = db.table('problem')
 
-    hash_values = {}
     for problem in problems:
         problem_spec_hash = problem['problem_spec_hash']
         if not problem_table.search(where('problem_spec_hash') == problem_spec_hash):
-            hash_values[problem_spec_hash] = problem
-        if len(hash_values) >= k:
-            break
-
-    for problem_spec_hash, problem in hash_values.items():
-        print('problem_spec_hash =', problem_spec_hash)
-        content = download_blob(problem_spec_hash)
-        problem_table.insert(
-            {**problem, 'content': content})
-
+            print('problem_spec_hash =', problem_spec_hash)
+            content = download_blob(problem_spec_hash)
+            problem_table.insert({**problem, 'content': content})
+        else:
+            problem_table.update(problem, where('problem_spec_hash') == problem_spec_hash)
 
 def main():
     # snapshot APIからダウンロード
