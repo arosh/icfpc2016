@@ -1,9 +1,13 @@
-import requests
-import util
+import json
 import time
+
+import requests
 import tinydb
 from tinydb import where
-import json
+from tinydb.middlewares import CachingMiddleware
+from tinydb.storages import JSONStorage
+
+import util
 
 last_access = None
 
@@ -51,17 +55,17 @@ def download_topk_problems(contest_status):
     # solution_sizeが小さい順にダウンロード
     problems.sort(key=lambda x: x['solution_size'], reverse=True)
 
-    db = tinydb.TinyDB('icfpc.json')
-    problem_table = db.table('problem')
+    with tinydb.TinyDB('icfpc.json', storage=CachingMiddleware(JSONStorage)) as db:
+        problem_table = db.table('problem')
 
-    for problem in problems:
-        problem_spec_hash = problem['problem_spec_hash']
-        if not problem_table.search(where('problem_spec_hash') == problem_spec_hash):
-            print('problem_spec_hash =', problem_spec_hash)
-            content = download_blob(problem_spec_hash)
-            problem_table.insert({**problem, 'content': content})
-        else:
-            problem_table.update(problem, where('problem_spec_hash') == problem_spec_hash)
+        for problem in problems:
+            problem_spec_hash = problem['problem_spec_hash']
+            if not problem_table.search(where('problem_spec_hash') == problem_spec_hash):
+                print('problem_spec_hash =', problem_spec_hash)
+                content = download_blob(problem_spec_hash)
+                problem_table.insert({**problem, 'content': content})
+            else:
+                problem_table.update(problem, where('problem_spec_hash') == problem_spec_hash)
 
 def main():
     # snapshot APIからダウンロード

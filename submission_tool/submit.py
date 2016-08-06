@@ -1,11 +1,13 @@
-import requests
-import time
+import argparse
 import subprocess
+import sys
+import time
+
+import requests
 import tinydb
 from tinydb import where
+
 import util
-import sys
-import argparse
 
 last_access = None
 
@@ -26,7 +28,7 @@ def get_problem_id_list(solver_name):
 def create_solution(problem_id):
     db = tinydb.TinyDB('icfpc.json')
     problem_table = db.table('problem')
-    problem = problem_table.search(where('problem_id') == problem_id)[0]
+    problem = problem_table.get(where('problem_id') == problem_id)
     print('create_solution: problem_id =', problem_id)
     try:
         solution = subprocess.check_output(['./solver'], input=problem['content'].encode('UTF-8'))
