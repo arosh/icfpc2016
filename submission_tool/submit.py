@@ -6,30 +6,34 @@ import time
 import requests
 import tinydb
 from tinydb import where
+from tqdm import tqdm
 
 import util
 
 last_access = None
 
-def get_problem_id_list(solver_name):
+def get_problem_id_list(solver_name, db):
     # 未提出でsolution_sizeが小さい順
-    db = tinydb.TinyDB('icfpc.json')
     submission_table = db.table('submission')
-    problem_table = db.table('problem')
-    problems = problem_table.all()
+    contest_table = db.table('contest')
 
+    latest_contest = max(contest_table.all(), key=lambda x: x['snapshot_time'])
+    problems = latest_contest['problems']
     problems.sort(key=lambda x: x['solution_size'], reverse=True)
+
+    submission_set = set((x['problem_id'], x['solver_name']) for x in submission_table.all())
     for problem in problems:
-        query = (where('problem_id') == problem['problem_id']) & (where('solver_name') == solver_name)
-        if not submission_table.contains(query):
+        if (problem['problem_id'], solver_name) not in submission_set:
             yield problem['problem_id']
 
 
-def create_solution(problem_id):
-    db = tinydb.TinyDB('icfpc.json')
+def create_solution(problem_id, db):
     problem_table = db.table('problem')
     problem = problem_table.get(where('problem_id') == problem_id)
     print('create_solution: problem_id =', problem_id)
+    if problem is None:
+        print('cannot find content (problem_id = {})'.format(problem_id))
+        return None
     try:
         content = problem['content'].encode('UTF-8')
         solution = subprocess.check_output(['./solver'], input=content)
@@ -39,10 +43,10 @@ def create_solution(problem_id):
         return None
 
 
-def submit_solution(problem_id, solution, solver_name):
+def submit_solution(problem_id, solution, solver_name, db):
     global last_access
     if last_access is not None:
-        time.sleep(max(0, last_access + 1 - time.time()))
+        time.sleep(max(0, last_access + util.SLEEP - time.time()))
 
     headers = {
         'Expect': '',
@@ -58,7 +62,6 @@ def submit_solution(problem_id, solution, solver_name):
     rj['solver_name'] = solver_name
 
     if rj['ok']:
-        db = tinydb.TinyDB('icfpc.json')
         submission_table = db.table('submission')
         submission_table.insert(rj)
         print('resemblance =', rj['resemblance'])
@@ -71,12 +74,13 @@ def main():
     args = parser.parse_args()
     solver_name = args.solver_name
 
-    for problem_id in get_problem_id_list(solver_name):
-        print('next problem_id =', problem_id)
-        solution = create_solution(problem_id)
-        if solution is None:
-            continue
-        submit_solution(problem_id, solution, solver_name)
+    with tinydb.TinyDB(util.FILENAME) as db:
+        for problem_id in tqdm(list(get_problem_id_list(solver_name, db))):
+            print('next problem_id =', problem_id)
+            solution = create_solution(problem_id, db)
+            if solution is None:
+                continue
+            submit_solution(problem_id, solution, solver_name, db)
 
 if __name__ == '__main__':
     main()

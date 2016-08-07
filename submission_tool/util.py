@@ -1,1 +1,3 @@
 API_KEY = '130-9f5940b38dc099fbd246b34d5d913b92'
+FILENAME = './icfpc.json'
+SLEEP = 4

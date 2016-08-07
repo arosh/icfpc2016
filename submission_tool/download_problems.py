@@ -6,6 +6,7 @@ import tinydb
 from tinydb import where
 from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
+from tqdm import tqdm
 
 import util
 
@@ -15,7 +16,7 @@ last_access = None
 def download_snapshot():
     global last_access
     if last_access is not None:
-        time.sleep(max(0, last_access + 1 - time.time()))
+        time.sleep(max(0, last_access + util.SLEEP - time.time()))
 
     headers = {
         'Expect': '',
@@ -31,7 +32,7 @@ def download_snapshot():
 def download_blob(spec_hash):
     global last_access
     if last_access is not None:
-        time.sleep(max(0, last_access + 1 - time.time()))
+        time.sleep(max(0, last_access + util.SLEEP - time.time()))
 
     headers = {
         'Expect': '',
@@ -45,24 +46,26 @@ def download_blob(spec_hash):
 
 
 def save_contest(contest_status):
-    db = tinydb.TinyDB('icfpc.json')
+    db = tinydb.TinyDB(util.FILENAME)
     contest_table = db.table('contest')
     contest_table.insert(contest_status)
 
 
 def download_problems(contest_status):
-    with tinydb.TinyDB('icfpc.json', storage=CachingMiddleware(JSONStorage)) as db:
+    with tinydb.TinyDB(util.FILENAME, storage=CachingMiddleware(JSONStorage)) as db:
         problem_table = db.table('problem')
 
-        for problem in contest_status['problems']:
-            problem_spec_hash = problem['problem_spec_hash']
+        for problem in tqdm(contest_status['problems']):
+            if problem['problem_size'] > 500:
+                continue
 
-            if not problem_table.contains(where('problem_spec_hash') == problem_spec_hash):
-                print('problem_spec_hash =', problem_spec_hash)
+            problem_id = problem['problem_id']
+
+            if not problem_table.contains(where('problem_id') == problem_id):
+                print('problem_id =', problem_id)
+                problem_spec_hash = problem['problem_spec_hash']
                 content = download_blob(problem_spec_hash)
-                problem_table.insert({**problem, 'content': content})
-            else:
-                problem_table.update(problem, where('problem_spec_hash') == problem_spec_hash)
+                problem_table.insert({'problem_id': problem_id, 'content': content})
 
 
 def main():
@@ -72,8 +75,8 @@ def main():
         raise Exception(snapshot)
     # タイムスタンプが最新のハッシュ値を得る
     time_and_hash = [(x['snapshot_time'], x['snapshot_hash']) for x in snapshot['snapshots']]
-    time_and_hash.sort(key=lambda x: x[0])
-    latest_snapshot_hash = time_and_hash[-1][1]
+    time_and_hash.sort(key=lambda x: x[0], reverse=True)
+    latest_snapshot_hash = time_and_hash[0][1]
     print('latest_snapshot_hash =', latest_snapshot_hash)
 
     # ハッシュ値をもとにコンテスト情報をダウンロード
