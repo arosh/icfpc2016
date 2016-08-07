@@ -32,7 +32,7 @@ export class D3Renderer {
     }
 
     public render(silhouette: IPoint[][], skeleton: ISegment[]) {
-        this.computeScaler(silhouette);
+        this.computeScaler(silhouette, skeleton);
         this.renderSilhouetteVertex(silhouette);
         this.renderSilhouetteEdge(silhouette);
         this.renderSkeletonEdge(skeleton);
@@ -88,7 +88,7 @@ export class D3Renderer {
             y2: (d, i) => this.yScale(d.en.y),
         });
     }
-    private computeScaler(vertex: IPoint[][]) {
+    private computeScaler(vertex: IPoint[][], skeleton: ISegment[]) {
         const xs: number[] = [];
         const ys: number[] = [];
         for (const poly of vertex) {
@@ -96,6 +96,10 @@ export class D3Renderer {
                 xs.push(point.x);
                 ys.push(point.y);
             }
+        }
+        for (const seg of skeleton) {
+            xs.push(seg.st.x, seg.en.x);
+            ys.push(seg.st.y, seg.en.y);
         }
         const xmin = Math.min(...xs);
         const xmax = Math.max(...xs);

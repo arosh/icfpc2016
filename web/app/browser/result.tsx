@@ -13,7 +13,7 @@ class App extends React.Component<{}, {}> {
         return (
             <div className="container">
                 <div className="row">
-                    <h1 className="text-center"><Link to="/">試運転@ICFPC 2016</Link></h1>
+                    <h1 className="text-center"><Link to="/">試運転 @ICFPC 2016</Link></h1>
                 </div>
                 { this.props.children }
             </div>
@@ -26,8 +26,6 @@ export interface IProblemLineProps {
     problemSize: number;
     solutionSize: number;
     maxScore: number;
-    yazaten_v1: number;
-    yazaten_v2: number;
     yazaten_v3: number;
 }
 
@@ -44,8 +42,6 @@ class ProblemLine extends React.Component<IProblemLineProps, {}> {
                 <td>{this.props.problemSize}</td>
                 <td>{this.props.solutionSize}</td>
                 <td>{maxScore}</td>
-                <td>{this.props.yazaten_v1}</td>
-                <td>{this.props.yazaten_v2}</td>
                 <td>{this.props.yazaten_v3}</td>
             </tr>
         );
@@ -70,8 +66,6 @@ class Home extends React.Component<{}, {}> {
                         <th>Problem Size</th>
                         <th>Solution Size</th>
                         <th>Max Score</th>
-                        <th>yazaten_v1</th>
-                        <th>yazaten_v2</th>
                         <th>yazaten_v3</th>
                     </thead>
                     <tbody>
@@ -90,9 +84,9 @@ interface IItemProps {
 }
 
 interface IItemState {
-    inputText?: string;
-    vertex?: IPoint[][];
-    edge?: ISegment[];
+    inputText: string;
+    vertex: IPoint[][];
+    edge: ISegment[];
 }
 
 class Item extends React.Component<IItemProps, IItemState> {
@@ -118,7 +112,8 @@ class Item extends React.Component<IItemProps, IItemState> {
                             <textarea
                                 rows={10}
                                 value={this.state.inputText}
-                                className="form-control"/>
+                                className="form-control"
+                                readOnly={true} />
                         </form>
                     </div>
                     <div id="d3" className="col-xs-6"></div>
