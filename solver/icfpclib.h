@@ -23,6 +23,9 @@ struct P {
   bool operator!=(const P &p) const {
     return !(*this == p);
   }
+  bool operator <(const P &p) const {
+    return tie(this->x, this->y) < tie(p.x, p.y);
+  }
   friend std::ostream &operator<<(std::ostream &os, const P &p) {
     os << "(" << p.x << "," << p.y << ")";
     return os;

@@ -3,45 +3,45 @@ using namespace icfpc;
 #define rep(i, n) for(int i = 0; i < (int)(n); ++i)
 
 vector<L> splitSkeleton(const vector<L> &skeleton) {
-  vector<L> tmp = skeleton;
-  while (true) {
-    bool update = false;
-    for(int i = 0; i < (int)tmp.size(); ++i) {
-      for(int j = i + 1; j < (int)tmp.size(); ++j) {
-        // 線分の端を含んで交差判定した時，trueになるのは3通りある
-        // 1. 十字形
-        // 2. T字型
-        // 3. a - b - c 型
-        // ここでは1と2だけを気にする必要がある
-        if(isIntersectSS(tmp[i], tmp[j])
-            && tmp[i].a != tmp[j].a && tmp[i].a != tmp[j].b
-            && tmp[i].b != tmp[j].a && tmp[i].b != tmp[j].b) {
-          P p = crosspointLL(tmp[i], tmp[j]);
-          vector<L> extend;
-          if(tmp[i].a != p) extend.push_back(L(tmp[i].a, p));
-          if(tmp[i].b != p) extend.push_back(L(tmp[i].b, p));
-          if(tmp[j].a != p) extend.push_back(L(tmp[j].a, p));
-          if(tmp[j].b != p) extend.push_back(L(tmp[j].b, p));
-          if(extend.size() > 2) {
-            // vectorから複数要素を消すのむずい
-            tmp.erase(tmp.begin() + i);
-            tmp.erase(tmp.begin() + j - 1);
-            tmp.insert(tmp.end(), extend.begin(), extend.end());
-            update = true;
-            break;
-          }
-        }
+  const auto &ss = skeleton;
+  vector<P> ps;
+  for(int i = 0; i < (int)skeleton.size(); ++i) {
+    ps.push_back(ss[i].a);
+    ps.push_back(ss[i].b);
+    for(int j = i + 1; j < (int)ss.size(); ++j) {
+      // iSSは端を含むが、後でuniqueするので気にしない
+      if(isIntersectSS(ss[i], ss[j])) {
+        ps.push_back(crosspointLL(ss[i], ss[j]));
       }
-      if(update) break;
     }
-    if(!update) break;
   }
-  return tmp;
+  sort(ps.begin(), ps.end());
+  ps.erase(unique(ps.begin(), ps.end()), ps.end());
+
+  vector<L> retval;
+  for(int i = 0; i < (int)ss.size(); ++i) {
+    vector<pair<BigRational,int>> li;
+    for(int j = 0; j  < (int)ps.size(); ++j) {
+      if(isIntersectSP(ss[i], ps[j])) {
+        BigRational dx = ss[i].a.x - ps[j].x;
+        BigRational dy = ss[i].a.y - ps[j].y;
+        BigRational norm2 = dx*dx + dy*dy;
+        li.emplace_back(norm2, j);
+      }
+    }
+    sort(li.begin(), li.end());
+    for(int j = 0; j < (int)li.size() - 1; ++j) {
+      int a = li[j].second;
+      int b = li[j+1].second;
+      retval.emplace_back(ps[a], ps[b]);
+    }
+  }
+  return retval;
 }
 
 bool isShareEdge(const L &s, const L &t) {
-  return ((isIntersectSP(s.a, s.b, t.a) && isIntersectSP(s.a, s.b, t.b))
-      || (isIntersectSP(t.a, t.b, s.a) && isIntersectSP(t.a, t.b, s.b)));
+  return ((isIntersectSP(s, t.a) && isIntersectSP(s, t.b))
+      || (isIntersectSP(t, s.a) && isIntersectSP(t, s.b)));
 }
 
 vector<vector<int>> createGraph(const vector<G> &g) {

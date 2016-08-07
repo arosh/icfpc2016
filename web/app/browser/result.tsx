@@ -58,7 +58,7 @@ class Home extends React.Component<{}, {}> {
         const td = this.problemLineProps.map(x => <ProblemLine {...x} />);
         return (
             <div className="row">
-                <table className="table table-striped">
+                <table className="table table-hover">
                     <thead>
                         <th></th>
                         <th></th>
@@ -123,7 +123,7 @@ class Item extends React.Component<IItemProps, IItemState> {
     }
     public componentDidMount() {
         this.d3renderer = new D3Renderer("#d3");
-        this.store.onTextUpdate(this.problemIdToContent[this.props.params.problemId]);
+        this.store.onTextUpdate(this.problemIdToContent[this.props.params.problemId].trim());
     }
     private onChange() {
         this.d3renderer.render(this.store.vertex, this.store.edge);
