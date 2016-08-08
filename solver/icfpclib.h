@@ -23,7 +23,7 @@ struct P {
   bool operator!=(const P &p) const {
     return !(*this == p);
   }
-  bool operator <(const P &p) const {
+  bool operator<(const P &p) const {
     return tie(this->x, this->y) < tie(p.x, p.y);
   }
   friend std::ostream &operator<<(std::ostream &os, const P &p) {
@@ -84,7 +84,7 @@ G readG() {
   int n;
   cin >> n;
   G g;
-  for(int i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i) {
     g.emplace_back(readP());
   }
   return g;
@@ -117,10 +117,19 @@ BigRational norm(const P &a) {
   return a.x * a.x + a.y * a.y;
 }
 
+// 符号付きじゃないよ
+BigRational area(const vector<P> &g) {
+  BigRational res(BigInt("0"));
+  for (int i = 0; i < (int)g.size(); ++i) {
+    res += cross(g[i], g[(i + 1) % g.size()]);
+  }
+  return abs(res / BigInt("2"));
+}
+
 bool counterClockwiseG(const G &g) {
   // 符号付き面積が正なら反時計回り
   BigRational area;
-  for(int i = 0; i < (int)g.size(); ++i) {
+  for (int i = 0; i < (int)g.size(); ++i) {
     area += cross(g[i], g[(i + 1) % g.size()]);
   }
   return area > BigInt("0");
@@ -143,11 +152,11 @@ int ccw(P a, P b, P c) {
 bool isIntersectSS(const L &s, const L &t) {
   // 端を含む
   return ccw(s.a, s.b, t.a) * ccw(s.a, s.b, t.b) <= 0 &&
-    ccw(t.a, t.b, s.a) * ccw(t.a, t.b, s.b) <= 0;
+         ccw(t.a, t.b, s.a) * ccw(t.a, t.b, s.b) <= 0;
 }
 
 bool isIntersectSP(L s, P p) {
-    return ccw(s.a, s.b, p) == 0;
+  return ccw(s.a, s.b, p) == 0;
 }
 
 P crosspointLL(const L &l, const L &m) {
@@ -184,7 +193,7 @@ P symmTransPL(P p, L l) {
 // 線対称な図形
 G symmTransGL(const G &g, const L &l) {
   G h;
-  for(int i = 0; i < (int)g.size(); ++i) {
+  for (int i = 0; i < (int)g.size(); ++i) {
     h.emplace_back(symmTransPL(g[i], l));
   }
   return h;
@@ -192,7 +201,7 @@ G symmTransGL(const G &g, const L &l) {
 
 // 多角形が直線に対してどちら側にあるか
 int relationGL(const G &g, const L &l) {
-  for(int i = 0; i < (int)g.size(); ++i) {
+  for (int i = 0; i < (int)g.size(); ++i) {
     // ccwから時計回り or 反時計回りの結果が返ってきたら、それをそのまま返す
     int t = ccw(l.a, l.b, g[i]);
     if (t == +1 || t == -1)
@@ -200,6 +209,30 @@ int relationGL(const G &g, const L &l) {
   }
   assert(false);
   return 0; // ここには来ないはず
+}
+
+// ON = 0, IN = 1, OUT = -1
+int containsGP(vector<P> g, P p) {
+  int side = -1;
+  for (int i = 0; i < (int)g.size(); i++) {
+    if (ccw(g[i], g[(i + 1) % g.size()], p) == 0)
+      return 0;
+    P a = g[i] - p;
+    P b = g[(i + 1) % g.size()] - p;
+    if (a.y > b.y)
+      swap(a, b);
+    if (a.y <= BigInt("0") && b.y > BigInt("0") && cross(a, b) > BigInt("0"))
+      side *= -1;
+  }
+  return side;
+}
+
+// gがhを含んでいるか (凸多角形限定，境界を含む)
+bool includeConvex(const G &g, const G &h) {
+  for(const P& p : h) {
+    if(containsGP(g, p) == -1) return false;
+  }
+  return true;
 }
 
 ///////////// Origami ////////////////
