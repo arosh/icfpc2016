@@ -8,7 +8,7 @@ module.exports = {
         filename: "[name].bundle.js",
     },
     resolve: {
-        extensions: ['', '.js', '.ts', 'tsx']
+        extensions: ['', '.js', '.ts', '.tsx']
     },
     // https://webpack.github.io/docs/library-and-externals.html
     externals: {
